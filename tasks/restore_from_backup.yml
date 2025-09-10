@@ -1,0 +1,9 @@
+- name: Остановить текущий StatefulSet
+  k8s:
+    state: absent
+    definition: "{{ lookup('template', 'statefulset.yaml.j2') }}"
+
+- name: Запустить Job по восстановлению
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'restore-job.yaml.j2') }}"

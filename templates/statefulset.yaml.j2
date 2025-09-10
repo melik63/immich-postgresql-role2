@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-primary
+  namespace: {{ postgres_namespace }}
+spec:
+  serviceName: postgres-primary
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      role: primary
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: primary
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:{{ postgres_version }}
+          env:
+            - name: POSTGRES_DB
+              value: "{{ postgres_database }}"
+            - name: POSTGRES_USER
+              value: "{{ postgres_user }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ postgres_password }}"
+            - name: AWS_ACCESS_KEY_ID
+              value: "{{ backup_aws_access_key }}"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "{{ backup_aws_secret_key }}"
+            - name: AWS_REGION
+              value: "{{ backup_region }}"
+            - name: WALE_S3_PREFIX
+              value: "{{ backup_storage_bucket }}"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: config
+              mountPath: /etc/postgresql/postgresql.conf
+              subPath: postgresql.conf
+            - name: hba
+              mountPath: /etc/postgresql/pg_hba.conf
+              subPath: pg_hba.conf
+          resources:
+            requests:
+              memory: "{{ memory_request }}"
+              cpu: "{{ cpu_request }}"
+      volumes:
+        - name: config
+          configMap:
+            name: postgres-config
+            items:
+              - key: postgresql.conf
+                path: postgresql.conf
+        - name: hba
+          configMap:
+            name: postgres-config
+            items:
+              - key: pg_hba.conf
+                path: pg_hba.conf
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "{{ storage_size }}"

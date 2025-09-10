@@ -1,0 +1,14 @@
+- name: Применить ConfigMap с конфигурацией PostgreSQL
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'configmap.yaml.j2') }}"
+
+- name: Применить Service для доступа к PostgreSQL
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'service.yaml.j2') }}"
+
+- name: Применить StatefulSet PostgreSQL
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'statefulset.yaml.j2') }}"

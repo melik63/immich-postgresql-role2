@@ -1,0 +1,8 @@
+- name: Убедиться, что WAL-G установлен в образе (или используется init контейнер)
+  # В нашем случае мы полагаемся на расширенный образ с WAL-G
+  # Альтернатива: использовать sidecar с wal-g
+
+- name: Применить CronJob для бэкапа базы
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'backup-cronjob.yaml.j2') }}"

@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-restore
+  namespace: {{ postgres_namespace }}
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: restore
+          image: maddevsio/walg-s3-postgres:15
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: "{{ backup_aws_access_key }}"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "{{ backup_aws_secret_key }}"
+            - name: AWS_REGION
+              value: "{{ backup_region }}"
+            - name: WALE_S3_PREFIX
+              value: "{{ backup_storage_bucket }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mkdir -p /var/lib/postgresql/data/pgdata
+              echo "Восстанавливаем базу данных..."
+              wal-g backup-fetch /var/lib/postgresql/data/pgdata {{ restore_target if restore_target != 'latest' else 'LATEST' }}
+              touch /var/lib/postgresql/data/pgdata/recovery.signal
+              echo "restore_command = 'wal-g wal-fetch \"%f\" \"%p\"'" > /var/lib/postgresql/data/pgdata/postgresql.auto.conf
+              chown -R 70:70 /var/lib/postgresql/data/pgdata
+              echo "Готово. Поднимите основной StatefulSet."
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-postgres-primary-0

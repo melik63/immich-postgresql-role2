@@ -1,0 +1,13 @@
+---
+- name: Создать namespace
+  include_tasks: create_namespace.yml
+
+- name: Развернуть PostgreSQL кластер
+  include_tasks: deploy_postgres.yml
+
+- name: Настроить регулярные бэкапы
+  include_tasks: setup_backup.yml
+
+- name: Выполнить восстановление из бэкапа
+  include_tasks: restore_from_backup.yml
+  when: restore_from_backup | bool
