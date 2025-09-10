@@ -1,13 +1,26 @@
----
-- name: Создать namespace
-  include_tasks: create_namespace.yml
+# tasks/main.yml
+- name: Ensure namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ postgres_namespace }}"
+    state: present
 
-- name: Развернуть PostgreSQL кластер
-  include_tasks: deploy_postgres.yml
+- name: Deploy PostgreSQL headless service
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ postgres_namespace }}"
+    template: "{{ role_path }}/templates/postgres-service.yml.j2"
 
-- name: Настроить регулярные бэкапы
-  include_tasks: setup_backup.yml
+- name: Deploy PostgreSQL statefulset
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ postgres_namespace }}"
+    template: "{{ role_path }}/templates/postgres-statefulset.yml.j2"
 
-- name: Выполнить восстановление из бэкапа
-  include_tasks: restore_from_backup.yml
-  when: restore_from_backup | bool
+- name: Create backup CronJob
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ postgres_namespace }}"
+    template: "{{ role_path }}/templates/backup-cronjob.yml.j2"
+

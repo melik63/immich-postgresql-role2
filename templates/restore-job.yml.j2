@@ -1,0 +1,23 @@
+# templates/restore-job.yml.j2
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-restore
+spec:
+  template:
+    spec:
+      containers:
+      - name: restore
+        image: {{ backup_image }}
+        command:
+          - /bin/sh
+          - -c
+          - |
+            mc alias set s3 {{ backup_bucket }} $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY
+            mc cp s3/{{ backup_bucket }}/{{ restore_file }} /tmp/restore.sql
+            PGPASSWORD={{ postgres_password }} psql -h postgres-0.postgres -U {{ postgres_user }} {{ postgres_db }} < /tmp/restore.sql
+        envFrom:
+        - secretRef:
+            name: {{ backup_secret }}
+      restartPolicy: OnFailure
+      backoffLimit: 1

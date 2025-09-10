@@ -1,0 +1,26 @@
+# templates/backup-cronjob.yml.j2
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  schedule: "{{ backup_schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: {{ backup_image }}
+            command:
+              - /bin/sh
+              - -c
+              - |
+                PGPASSWORD={{ postgres_password }} pg_dump -h postgres-0.postgres -U {{ postgres_user }} {{ postgres_db }} > /tmp/backup.sql
+                mc alias set s3 {{ backup_bucket }} $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY
+                mc cp /tmp/backup.sql s3/{{ backup_bucket }}/backup-$(date +"%Y%m%d%H%M").sql
+            envFrom:
+            - secretRef:
+                name: {{ backup_secret }}
+          restartPolicy: OnFailure
+

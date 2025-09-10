@@ -1,28 +1,13 @@
-# Общие параметры
+# defaults/main.yml
 postgres_namespace: "postgres"
-postgres_cluster_name: "postgres-cluster"
-postgres_version: "15"
+postgres_image: "bitnami/postgresql:16"
+postgres_replicas: 3
+postgres_storage_size: "5Gi"
+postgres_user: "admin"
+postgres_password: "changeme"
+postgres_db: "appdb"
+backup_image: "bitnami/kubectl:latest"
+backup_schedule: "0 2 * * *"   # каждый день в 2 ночи
+backup_bucket: "s3://my-postgres-backups"  # заменить на свой бакет
+backup_secret: "minio-creds"
 
-# Количество реплик (0 = только master)
-postgres_replicas: 1
-
-# Параметры БД
-postgres_database: "appdb"
-postgres_user: "appuser"
-postgres_password: "securepassword"
-
-# Настройки бэкапа
-backup_schedule: "0 2 * * *"                    # Ежедневно в 2:00
-backup_storage_bucket: "s3://my-postgres-backups/"
-backup_aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
-backup_aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-backup_region: "us-east-1"
-
-# Ресурсы
-storage_size: "10Gi"
-cpu_request: "200m"
-memory_request: "512Mi"
-
-# Восстановление
-restore_from_backup: false
-restore_target: "latest"  # имя бэкапа или "latest"

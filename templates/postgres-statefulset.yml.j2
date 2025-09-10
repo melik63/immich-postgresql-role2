@@ -1,0 +1,40 @@
+# templates/postgres-statefulset.yml.j2
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: "postgres"
+  replicas: {{ postgres_replicas }}
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: {{ postgres_image }}
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: {{ postgres_user }}
+        - name: POSTGRES_PASSWORD
+          value: {{ postgres_password }}
+        - name: POSTGRES_DB
+          value: {{ postgres_db }}
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/postgresql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ postgres_storage_size }}
+

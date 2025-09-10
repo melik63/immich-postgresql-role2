@@ -1,7 +1,0 @@
-- name: Создать namespace {{ postgres_namespace }}
-  k8s:
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: "{{ postgres_namespace }}"
